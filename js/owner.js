@@ -99,6 +99,8 @@ function wireOwnerUI() {
     document.getElementById('editBookingForm').addEventListener('submit', saveEditedBooking);
     document.getElementById('cancelEditBookingBtn').addEventListener('click', closeEditBookingModal);
     document.getElementById('closeEditBookingModal').addEventListener('click', closeEditBookingModal);
+
+    document.getElementById('exportDayPdfBtn').addEventListener('click', exportDayPDF);
 }
 
 async function showOwnerTab(tab) {
@@ -191,6 +193,70 @@ async function handleCancelBooking(bookingId) {
     if (error) { showAlert('❌ Erro ao cancelar', 'warning'); return; }
     showAlert('✅ Agendamento cancelado', 'success');
     await refreshActiveOwnerTab();
+}
+
+// ============ EXPORTAR PDF DO DIA ============
+async function exportDayPDF() {
+    const today = todayISO();
+    const { data, error } = await supabase.from('bookings').select('*')
+        .eq('barbearia_id', state.barbearia.id).eq('date', today).neq('status', 'cancelled')
+        .order('time', { ascending: true });
+
+    if (error) { showAlert('❌ Erro ao carregar agendamentos para o PDF', 'warning'); return; }
+    if (!data.length) { showAlert('⚠️ Não há agendamentos para hoje', 'warning'); return; }
+
+    const total = data.reduce((sum, b) => sum + Number(b.price), 0);
+
+    const content = document.createElement('div');
+    content.style.cssText = 'padding: 20px; font-family: Arial; color: #333; background: white;';
+    content.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px;">
+            <h1 style="color: #d4af37; margin: 0; font-size: 28px;">${escapeHtml(state.barbearia.name)}</h1>
+            <p style="margin: 5px 0; color: #666;">Agenda do Dia — ${formatDateLong(today)}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+                <tr style="background: #1a1a1a; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Horário</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Cliente</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Serviço</th>
+                    <th style="padding: 12px; text-align: right; border: 1px solid #d4af37;">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map((b, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f9f9f9'};">
+                        <td style="padding: 12px; border: 1px solid #eee;"><strong>${escapeHtml(b.time.slice(0,5))}</strong></td>
+                        <td style="padding: 12px; border: 1px solid #eee;">${escapeHtml(b.client_name)}${b.is_walkin ? ' 🚶' : ''}</td>
+                        <td style="padding: 12px; border: 1px solid #eee;">${escapeHtml(b.service_name)}</td>
+                        <td style="padding: 12px; border: 1px solid #eee; text-align: right;"><strong>R$ ${formatMoney(b.price)}</strong></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+            <tfoot>
+                <tr style="background: #d4af37;">
+                    <td colspan="3" style="padding: 12px; border: 1px solid #d4af37;"><strong style="color: #1a1a1a;">FATURAMENTO PREVISTO DO DIA</strong></td>
+                    <td style="padding: 12px; border: 1px solid #d4af37; text-align: right;"><strong style="color: #1a1a1a;">R$ ${formatMoney(total)}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+        <div style="margin-top: 40px; text-align: center; color: #999; font-size: 12px;">
+            <p>Total de agendamentos: ${data.length}</p>
+            <p>Documento gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+            <p>${escapeHtml(state.barbearia.name)} — Barbearia Online</p>
+        </div>
+    `;
+
+    const opt = {
+        margin: 10,
+        filename: `agenda-${state.barbearia.slug}-${today}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    window.html2pdf().set(opt).from(content).save();
+    showAlert('✅ PDF da agenda do dia exportado!', 'success');
 }
 
 // ============ CALENDÁRIO ============
