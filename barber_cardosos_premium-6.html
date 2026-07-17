@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barber Cardosos - Sistema de Agendamento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #d4af37;
+            --accent: #8b4513;
+            --light: #f5f5f5;
+            --text-dark: #333;
+            --text-light: #f5f5f5;
+            --success: #27ae60;
+            --warning: #e74c3c;
+            --border: #e0e0e0;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            html {
+                font-size: 13px;
+            }
+        }
+
+        body {
+            font-family: 'Georgia', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* FUNDO COM ANIMAÇÕES */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-tool {
+            position: absolute;
+            opacity: 0.05;
+            filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3));
+        }
+
+        @keyframes float-smooth {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.05;
+            }
+            50% {
+                transform: translateY(-30px) rotate(15deg);
+                opacity: 0.08;
+            }
+        }
+
+        @keyframes drift-left {
+            0%, 100% {
+                transform: translateX(0) translateY(0);
+            }
+            25% {
+                transform: translateX(-20px) translateY(-20px);
+            }
+            50% {
+                transform: translateX(0) translateY(-40px);
+            }
+            75% {
+                transform: translateX(20px) translateY(-20px);
+            }
+        }
+
+        @keyframes drift-right {
+            0%, 100% {
+                transform: translateX(0) translateY(0);
+            }
+            25% {
+                transform: translateX(20px) translateY(-20px);
+            }
+            50% {
+                transform: translateX(0) translateY(-40px);
+            }
+            75% {
+                transform: translateX(-20px) translateY(-20px);
+            }
+        }
+
+        .floating-tool:nth-child(1) {
+            animation: float-smooth 6s ease-in-out infinite, drift-left 8s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(2) {
+            animation: float-smooth 7s ease-in-out 1s infinite, drift-right 9s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(3) {
+            animation: float-smooth 5.5s ease-in-out 2s infinite, drift-left 7.5s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(4) {
+            animation: float-smooth 6.5s ease-in-out 1.5s infinite, drift-right 8.5s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(5) {
+            animation: float-smooth 7.5s ease-in-out 0.5s infinite, drift-left 10s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(6) {
+            animation: float-smooth 6s ease-in-out 2.5s infinite, drift-right 9.5s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(7) {
+            animation: float-smooth 5.8s ease-in-out 1.8s infinite, drift-left 8.8s ease-in-out infinite;
+        }
+        .floating-tool:nth-child(8) {
+            animation: float-smooth 7.2s ease-in-out 0.3s infinite, drift-right 7.8s ease-in-out infinite;
+        }
+
+        .container-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* HEADER/NAVBAR */
+        .navbar {
+            background: var(--primary);
+            color: var(--light);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--secondary);
+            box-shadow: 0 2px 15px rgba(212, 175, 55, 0.15);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem;
+            }
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .navbar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+            flex-shrink: 0;
+        }
+
+        .navbar-logo img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+                gap: 0.5rem;
+            }
+
+            .navbar-logo {
+                width: 40px;
+                height: 40px;
+            }
+
+            .navbar-logo img {
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-nav {
+                gap: 1rem;
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+
+        .nav-link {
+            color: var(--light);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--secondary);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .nav-link {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .user-info {
+                font-size: 0.8rem;
+                gap: 0.5rem;
+            }
+        }
+
+        /* BOTÕES */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .btn {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), #c49a3a);
+            color: var(--primary);
+            box-shadow: 0 4px 8px rgba(212, 175, 55, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #e6c200, var(--secondary));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: #6d3410;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        .btn-outline:hover {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        /* CONTAINER PRINCIPAL */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.75rem;
+            }
+        }
+
+        /* ABAS */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                margin-bottom: 1.5rem;
+                gap: 0.25rem;
+            }
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .tab-button {
+                padding: 0.8rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-button {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        .tab-button.active {
+            color: var(--secondary);
+            border-bottom-color: var(--secondary);
+        }
+
+        .tab-button:hover {
+            color: var(--secondary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CARDS */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 1.2rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 1rem;
+                margin-bottom: 0.8rem;
+            }
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .card-title {
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* FORMULÁRIOS */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 1rem;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-group label {
+                font-size: 0.9rem;
+            }
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                font-size: 0.95rem;
+                padding: 0.7rem;
+            }
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--light);
+            padding: 2.5rem;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+            margin: auto;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                padding: 1.8rem;
+                max-width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--text-dark);
+            transition: all 0.3s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+
+        /* ALERTAS */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .alert {
+                padding: 0.8rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        .alert-success {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+            border-left: 4px solid #27ae60;
+        }
+
+        .alert-info {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border-left: 4px solid #3498db;
+        }
+
+        .alert-warning {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border-left: 4px solid #e74c3c;
+        }
+
+        /* TABELAS */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .table {
+                font-size: 0.75rem;
+            }
+        }
+
+        .table thead th {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .table thead th {
+                padding: 0.8rem 0.5rem;
+            }
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .table tbody td {
+                padding: 0.8rem 0.5rem;
+            }
+        }
+
+        .table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        /* BOOKING CARDS */
+        .booking-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-left: 4px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .booking-card {
+                padding: 1rem;
+                margin-bottom: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .booking-card {
+                padding: 0.8rem;
+                margin-bottom: 0.6rem;
+            }
+        }
+
+        .booking-card:hover {
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .booking-card.confirmed {
+            border-left-color: #27ae60;
+        }
+
+        .booking-card.pending {
+            border-left-color: #f39c12;
+        }
+
+        .booking-time {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .booking-time {
+                font-size: 1.1rem;
+            }
+        }
+
+        .booking-client-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .booking-client-name {
+                font-size: 0.95rem;
+            }
+        }
+
+        .booking-status {
+            display: inline-block;
+            margin-top: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .booking-status.confirmed {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+
+        .booking-status.pending {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        /* GRID LAYOUT */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                gap: 1.2rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* DASHBOARD STATS */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(139, 69, 19, 0.15));
+            border: 3px solid var(--secondary);
+            border-radius: 10px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 1.5rem 1rem;
+                min-height: 130px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-card {
+                padding: 1.2rem 0.8rem;
+                min-height: 120px;
+            }
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            color: var(--secondary);
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+
+        .stat-label {
+            color: var(--secondary);
+            font-weight: 700;
+            margin: 0;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            background: rgba(212, 175, 55, 0.15);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .stat-label {
+                font-size: 0.85rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-label {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.5rem;
+            }
+        }
+
+        /* CALENDAR */
+        .calendar-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .calendar-container {
+                padding: 1.2rem;
+            }
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-header h2 {
+            font-size: 1.3rem;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .calendar-header h2 {
+                font-size: 1.1rem;
+            }
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .calendar-grid {
+                gap: 0.25rem;
+            }
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-day {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-day {
+                font-size: 0.7rem;
+            }
+        }
+
+        .calendar-day:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--secondary);
+        }
+
+        .calendar-day.today {
+            background: var(--secondary);
+            color: var(--primary);
+            border-color: var(--secondary);
+        }
+
+        .calendar-day.other-month {
+            color: #999;
+            background: #f9f9f9;
+            cursor: default;
+        }
+
+        .calendar-day.has-bookings {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--secondary);
+        }
+
+        /* RESPONSIVE FORMS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--primary);
+            color: var(--light);
+            text-align: center;
+            padding: 2rem;
+            border-top: 2px solid var(--secondary);
+            margin-top: 3rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            footer {
+                padding: 1.5rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        footer a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* LOGIN LOGO */
+        .login-logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+            .login-logo {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-logo {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* BUTTON GROUPS */
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                gap: 0.4rem;
+            }
+        }
+
+        .button-group .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        @media (max-width: 480px) {
+            .button-group .btn {
+                min-width: 100px;
+            }
+        }
+
+        /* HIDDEN */
+        .hidden {
+            display: none !important;
+        }
+
+        /* MOBILE MENU */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .navbar-nav.mobile-hidden {
+                display: none;
+            }
+
+            .navbar-nav.mobile-visible {
+                display: flex !important;
+                flex-basis: 100%;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- FUNDO COM ANIMAÇÕES -->
+    <div class="background-animation" id="backgroundAnimation"></div>
+
+    <div class="container-wrapper">
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <div class="navbar-logo">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="95" fill="white" stroke="#d4af37" stroke-width="3"/>
+                        <text x="100" y="50" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Barber Shop</text>
+                        <text x="100" y="140" font-family="Georgia, serif" font-size="12" text-anchor="middle" fill="#666">BARBA, CABELO E BIGODE</text>
+                        <text x="100" y="100" font-family="Georgia, serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#8b4513">Cardosos</text>
+                    </svg>
+                </div>
+                Barber Cardosos
+            </div>
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        <div class="navbar-nav mobile-hidden" id="navbarNav">
+            <a class="nav-link active" onclick="showPage('login')">🔐 Login</a>
+            <a class="nav-link" onclick="showPage('client')">👤 Cliente</a>
+            <a class="nav-link" onclick="showPage('barber')">💇 Barbeiro</a>
+            <div class="user-info" id="userInfo" style="display:none;">
+                <span id="userName"></span>
+                <button class="btn btn-small btn-danger" onclick="logout()">🚪 Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="container">
+        <!-- LOGIN PAGE -->
+        <div id="loginPage" class="tab-content active">
+            <div class="card" style="max-width: 500px; margin: 2rem auto;">
+                <div class="login-logo-container">
+                    <div class="login-logo">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="100" cy="100" r="95" fill="white" stroke="#d4af37" stroke-width="3"/>
+                            <text x="100" y="50" font-family="Georgia, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Barber Shop</text>
+                            <text x="100" y="140" font-family="Georgia, serif" font-size="12" text-anchor="middle" fill="#666">BARBA, CABELO E BIGODE</text>
+                            <text x="100" y="100" font-family="Georgia, serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#8b4513">Cardosos</text>
+                        </svg>
+                    </div>
+                    <h1 style="color:var(--secondary); font-size:2rem; margin-bottom:0.5rem;">Barber Cardosos</h1>
+                    <p style="color:#666; font-size:0.95rem;">Sistema de Agendamento Premium</p>
+                </div>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>📧 Email ou Usuário</label>
+                        <input type="text" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔑 Senha</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; font-size:1rem;">Entrar</button>
+                </form>
+
+                <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid var(--border);">
+                    <p style="color:#666; text-align:center; margin-bottom:1rem;"><strong>🧪 Dados para Teste:</strong></p>
+                    
+                    <div style="background:rgba(212,175,55,0.1); padding:1rem; border-radius:8px; margin-bottom:0.8rem;">
+                        <p style="margin:0 0 0.5rem 0; color:var(--secondary); font-weight:700;">💇 BARBEIRO</p>
+                        <p style="margin:0.3rem 0; font-size:0.85rem;">
+                            📧 Email: <strong>barber@test.com</strong><br>
+                            🔑 Senha: <strong>123456</strong>
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(39,174,96,0.1); padding:1rem; border-radius:8px; margin-bottom:0.8rem;">
+                        <p style="margin:0 0 0.5rem 0; color:#27ae60; font-weight:700;">👤 CLIENTE 1</p>
+                        <p style="margin:0.3rem 0; font-size:0.85rem;">
+                            📧 Email: <strong>client@test.com</strong><br>
+                            🔑 Senha: <strong>123456</strong>
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(52,152,219,0.1); padding:1rem; border-radius:8px; margin-bottom:0.8rem;">
+                        <p style="margin:0 0 0.5rem 0; color:#3498db; font-weight:700;">👤 CLIENTE 2</p>
+                        <p style="margin:0.3rem 0; font-size:0.85rem;">
+                            📧 Email: <strong>maria@test.com</strong><br>
+                            🔑 Senha: <strong>123456</strong>
+                        </p>
+                    </div>
+
+                    <div style="background:rgba(230,126,34,0.1); padding:1rem; border-radius:8px;">
+                        <p style="margin:0 0 0.5rem 0; color:#e67e22; font-weight:700;">👤 CLIENTE 3</p>
+                        <p style="margin:0.3rem 0; font-size:0.85rem;">
+                            📧 Email: <strong>pedro@test.com</strong><br>
+                            🔑 Senha: <strong>123456</strong>
+                        </p>
+                    </div>
+
+                    <p style="margin-top:1rem; color:#999; font-size:0.8rem; text-align:center;">
+                        ✨ O sistema reconhece automaticamente se você é barbeiro ou cliente!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLIENT PAGE -->
+        <div id="clientPage" class="tab-content">
+            <div class="tabs">
+                <button class="tab-button active" onclick="showClientTab('schedule')">📅 Agendar</button>
+                <button class="tab-button" onclick="showClientTab('mybookings')">📋 Meus Agendamentos</button>
+                <button class="tab-button" onclick="showClientTab('profile')">👤 Perfil</button>
+            </div>
+
+            <!-- SCHEDULE TAB -->
+            <div id="scheduleTab" class="tab-content active">
+                <div class="card">
+                    <h2 class="card-title">📅 Agendar um Horário</h2>
+                    <form onsubmit="bookNow(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Serviço</label>
+                                <select id="serviceType" required>
+                                    <option value="">Selecione um serviço...</option>
+                                    <option value="haircut">Corte de Cabelo - R$ 45,00</option>
+                                    <option value="beard">Barba - R$ 35,00</option>
+                                    <option value="combined">Corte + Barba - R$ 70,00</option>
+                                    <option value="wash">Lavagem - R$ 25,00</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="bookingDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Horário (HH:MM)</label>
+                                <input type="time" id="bookingTime" required style="font-size:1.2rem;text-align:center;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="bookingNotes" rows="3" placeholder="Descreva o corte/estilo desejado..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">✓ Confirmar Agendamento</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MY BOOKINGS TAB -->
+            <div id="mybookingsTab" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">📋 Meus Agendamentos</h2>
+                    <div id="clientBookingsContainer"></div>
+                </div>
+            </div>
+
+            <!-- PROFILE TAB -->
+            <div id="profileTab" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">👤 Meu Perfil</h2>
+                    <div id="clientProfileInfo"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BARBER PAGE -->
+        <div id="barberPage" class="tab-content">
+            <div class="tabs">
+                <button class="tab-button active" onclick="showBarberTab('today')">📅 Hoje</button>
+                <button class="tab-button" onclick="showBarberTab('calendar')">📆 Calendário</button>
+                <button class="tab-button" onclick="showBarberTab('walkin')">🚶 Walk-in</button>
+                <button class="tab-button" onclick="showBarberTab('availability')">🔒 Disponibilidade</button>
+                <button class="tab-button" onclick="showBarberTab('clients')">👥 Clientes</button>
+            </div>
+
+            <!-- TODAY TAB -->
+            <div id="todayTab" class="tab-content active">
+                <div class="grid grid-2">
+                    <div class="stat-card">
+                        <div class="stat-number" id="todayBookingsCount">0</div>
+                        <div class="stat-label">Agendamentos Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalRevenueToday">R$ 0</div>
+                        <div class="stat-label">Faturamento Hoje</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">📅 Agendamentos de Hoje</h2>
+                    <div id="todayBookingsContainer"></div>
+                </div>
+            </div>
+
+            <!-- CALENDAR TAB -->
+            <div id="calendarTab" class="tab-content">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h2>Calendário</h2>
+                        <div class="calendar-nav button-group">
+                            <button class="btn btn-small btn-outline" onclick="previousMonth()">←</button>
+                            <button class="btn btn-small btn-outline" onclick="nextMonth()">→</button>
+                        </div>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid"></div>
+                    <div id="selectedDayBookings" style="margin-top:2rem;"></div>
+                </div>
+            </div>
+
+            <!-- WALK-IN TAB -->
+            <div id="walkinTab" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">🚶 Registrar Walk-in</h2>
+                    <form onsubmit="addWalkinClient(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nome do Cliente</label>
+                                <input type="text" id="walkinName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="tel" id="walkinPhone" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Serviço</label>
+                            <select id="walkinService" required>
+                                <option value="">Selecione um serviço...</option>
+                                <option value="haircut">Corte de Cabelo - R$ 45,00</option>
+                                <option value="beard">Barba - R$ 35,00</option>
+                                <option value="combined">Corte + Barba - R$ 70,00</option>
+                                <option value="wash">Lavagem - R$ 25,00</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="walkinNotes" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">✓ Registrar Walk-in</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">🚶 Walk-ins Registrados Hoje</h2>
+                    <div id="walkinListContainer"></div>
+                </div>
+            </div>
+
+            <!-- AVAILABILITY TAB -->
+            <div id="availabilityTab" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">🔒 Gerenciar Disponibilidade</h2>
+                    <p style="color:#666;margin-bottom:1.5rem;">Bloqueie horários específicos quando quiser indisponíveis</p>
+                    
+                    <form onsubmit="blockAvailability(event)" style="background:rgba(212,175,55,0.1);padding:1.5rem;border-radius:10px;margin-bottom:2rem;">
+                        <h3 style="color:var(--secondary);margin-bottom:1rem;">➕ Bloquear Novo Horário</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="blockDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Horário (HH:MM)</label>
+                                <input type="time" id="blockTime" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">🔒 Bloquear Horário</button>
+                    </form>
+
+                    <div class="card" style="background:white;border:2px solid var(--border);">
+                        <h3 style="color:var(--secondary);margin-bottom:1rem;">Horários Bloqueados</h3>
+                        <div id="blockedAvailabilityList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENTS TAB -->
+            <div id="clientsTab" class="tab-content">
+                <div class="card">
+                    <h2 class="card-title">👥 Meus Clientes</h2>
+                    <button class="btn btn-primary" onclick="openAddClientModal()" style="margin-bottom:1.5rem;">➕ Adicionar Cliente</button>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Agendamentos</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALHES DO AGENDAMENTO -->
+    <div id="bookingDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeBookingDetailsModal()">&times;</span>
+            <h2 class="card-title" id="bookingModalTitle">Detalhes do Agendamento</h2>
+            <div id="bookingDetailsContent"></div>
+            <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:space-between; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="exportBookingPDF()" id="exportPdfBtn">📥 Exportar PDF</button>
+                <button class="btn btn-secondary" onclick="closeBookingDetailsModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDITAR AGENDAMENTO -->
+    <div id="editBookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditBookingModal()">&times;</span>
+            <h2 class="card-title" id="editBookingTitle">✏️ Editar Agendamento</h2>
+            <form onsubmit="saveEditedBooking(event)">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <input type="text" id="editBookingClient" disabled style="background:#f0f0f0;">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="editBookingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Horário (HH:MM)</label>
+                        <input type="time" id="editBookingTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Serviço</label>
+                    <input type="text" id="editBookingService" disabled style="background:#f0f0f0;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:0.5rem;">✓ Salvar Alterações</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditBookingModal()" style="width:100%;">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR CLIENTE -->
+    <div id="addClientModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAddClientModal()">&times;</span>
+            <h2 class="card-title">➕ Novo Cliente</h2>
+            <form onsubmit="addNewClient(event)">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="newClientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" id="newClientPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="newClientEmail">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">✓ Adicionar Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2024 Barber Cardosos - Sistema de Agendamento Premium</p>
+        <p>Desenvolvido com ❤️ em Curitiba | <a href="mailto:contato@barbercardosos.com">Contato</a></p>
+    </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // ============ DATA STORAGE ============
+        let CLIENTS = JSON.parse(localStorage.getItem('barber_clients')) || [
+            { id: 1, name: 'João Silva', phone: '11999999999', email: 'client@test.com', password: '123456', createdAt: new Date(), bookingCount: 0 },
+            { id: 2, name: 'Maria Santos', phone: '11988888888', email: 'maria@test.com', password: '123456', createdAt: new Date(), bookingCount: 0 },
+            { id: 3, name: 'Pedro Costa', phone: '11977777777', email: 'pedro@test.com', password: '123456', createdAt: new Date(), bookingCount: 0 }
+        ];
+
+        let BOOKINGS = JSON.parse(localStorage.getItem('barber_bookings')) || [];
+
+        let BLOCKED_AVAILABILITY = JSON.parse(localStorage.getItem('barber_blocked')) || [];
+
+        const SERVICES = {
+            haircut: { name: 'Corte de Cabelo', price: 45 },
+            beard: { name: 'Barba', price: 35 },
+            combined: { name: 'Corte + Barba', price: 70 },
+            wash: { name: 'Lavagem', price: 25 }
+        };
+
+        const BARBER_ACCOUNT = { email: 'barber@test.com', password: '123456', name: 'Cardoso' };
+        const BARBER_HOURS = {
+            open: '08:00',    // Abre às 8h
+            close: '20:00'    // Fecha às 20h
+        };
+        const CLIENT_ACCOUNTS = [
+            { 
+                email: 'client@test.com', 
+                password: '123456', 
+                name: 'João Silva', 
+                id: 1,
+                phone: '11999999999',
+                createdAt: new Date().toISOString()
+            },
+            { 
+                email: 'maria@test.com', 
+                password: '123456', 
+                name: 'Maria Santos', 
+                id: 2,
+                phone: '11988888888',
+                createdAt: new Date().toISOString()
+            },
+            { 
+                email: 'pedro@test.com', 
+                password: '123456', 
+                name: 'Pedro Costa', 
+                id: 3,
+                phone: '11977777777',
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        let CURRENT_USER = null;
+        let CURRENT_USER_TYPE = null;
+
+        // ============ LOGIN ============
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            console.log('🔐 Tentando login com:', email);
+
+            // Tentar login como BARBEIRO primeiro
+            if (email === BARBER_ACCOUNT.email && password === BARBER_ACCOUNT.password) {
+                console.log('✅ Login de barbeiro bem-sucedido!');
+                CURRENT_USER = BARBER_ACCOUNT;
+                CURRENT_USER_TYPE = 'barber';
+                showPage('barber');
+                updateNavbar();
+                loadBarberDashboard();
+                showAlert('✅ Bem-vindo, Barbeiro!', 'success');
+                return;
+            }
+
+            // Tentar login como CLIENTE
+            const client = CLIENT_ACCOUNTS.find(c => c.email === email && c.password === password);
+            if (client) {
+                console.log('✅ Login de cliente bem-sucedido!');
+                CURRENT_USER = client;
+                CURRENT_USER_TYPE = 'client';
+                showPage('client');
+                updateNavbar();
+                loadClientDashboard();
+                showAlert('✅ Bem-vindo, Cliente!', 'success');
+                return;
+            }
+
+            // Se chegou aqui, nenhum tipo de login funcionou
+            console.log('❌ Credenciais não encontradas');
+            showAlert('❌ Email ou senha incorretos. Verifique seus dados.', 'warning');
+        }
+
+        function logout() {
+            CURRENT_USER = null;
+            CURRENT_USER_TYPE = null;
+            document.getElementById('userInfo').style.display = 'none';
+            showPage('login');
+            showAlert('✅ Deslogado com sucesso', 'success');
+        }
+
+        function updateNavbar() {
+            const userInfo = document.getElementById('userInfo');
+            const userName = document.getElementById('userName');
+            const navLinksLogin = document.querySelectorAll('[onclick*="showPage(\'login\')"]');
+            const navLinksClient = document.querySelectorAll('[onclick*="showPage(\'client\')"]');
+            const navLinksBarber = document.querySelectorAll('[onclick*="showPage(\'barber\')"]');
+
+            if (CURRENT_USER) {
+                userInfo.style.display = 'flex';
+                userName.textContent = `👋 Olá, ${CURRENT_USER.name}!`;
+                
+                // Esconder Login de Cliente se barbeiro está logado
+                if (CURRENT_USER_TYPE === 'barber') {
+                    navLinksClient.forEach(el => el.style.display = 'none');
+                    navLinksLogin.forEach(el => el.style.display = 'none');
+                }
+                // Esconder Login de Barbeiro se cliente está logado
+                else if (CURRENT_USER_TYPE === 'client') {
+                    navLinksBarber.forEach(el => el.style.display = 'none');
+                    navLinksLogin.forEach(el => el.style.display = 'none');
+                }
+            } else {
+                userInfo.style.display = 'none';
+                navLinksClient.forEach(el => el.style.display = 'block');
+                navLinksBarber.forEach(el => el.style.display = 'block');
+                navLinksLogin.forEach(el => el.style.display = 'block');
+            }
+        }
+
+        // ============ PAGE NAVIGATION ============
+        function showPage(pageName) {
+            document.querySelectorAll('[id$="Page"]').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageName + 'Page').classList.add('active');
+            closeMobileMenu();
+        }
+
+        function showClientTab(tabName) {
+            console.log('📑📑 Mudando para aba:', tabName);
+            console.log('👤 CURRENT_USER:', CURRENT_USER);
+            
+            document.querySelectorAll('#clientPage .tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            document.querySelectorAll('#clientPage .tab-button').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tabName === 'mybookings') {
+                console.log('💼 Carregando agendamentos do cliente...');
+                loadClientBookings();
+            }
+            if (tabName === 'profile') {
+                console.log('👤 Carregando perfil do cliente...');
+                loadClientProfile();
+            }
+        }
+
+        function showBarberTab(tabName) {
+            document.querySelectorAll('#barberPage .tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            document.querySelectorAll('#barberPage .tab-button').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tabName === 'today') {
+                loadTodayBookings();
+                updateDashboardStats();
+            }
+            if (tabName === 'calendar') renderCalendar();
+            if (tabName === 'walkin') {
+                loadWalkinList();
+            }
+            if (tabName === 'availability') {
+                loadBlockedAvailability();
+            }
+            if (tabName === 'clients') updateClientsTable();
+        }
+
+        // ============ CLIENT FUNCTIONS ============
+        function bookNow(event) {
+            event.preventDefault();
+
+            // Validar que usuário está logado
+            if (!CURRENT_USER || !CURRENT_USER.id) {
+                showAlert('❌ Você precisa estar logado para agendar', 'warning');
+                console.error('❌ CURRENT_USER não definido:', CURRENT_USER);
+                return;
+            }
+
+            console.log('👤 Usuario logado:', CURRENT_USER);
+
+            const serviceType = document.getElementById('serviceType').value;
+            const date = document.getElementById('bookingDate').value;
+            const time = document.getElementById('bookingTime').value;
+            const notes = document.getElementById('bookingNotes').value;
+
+            console.log('📝 Agendamento a criar:', { serviceType, date, time, notes });
+
+            // ============ VALIDAÇÕES ============
+
+            // 1. Verificar se a data inteira está bloqueada
+            const allDayBlockKey = `${date}-FULL-DAY`;
+            if (BLOCKED_AVAILABILITY.includes(allDayBlockKey)) {
+                showAlert('❌ Esta data está completamente bloqueada para agendamentos', 'warning');
+                return;
+            }
+
+            // 2. Verificar se o horário específico está bloqueado
+            const blockedKey = `${date}-${time}`;
+            if (BLOCKED_AVAILABILITY.includes(blockedKey)) {
+                showAlert('❌ Este horário está indisponível', 'warning');
+                return;
+            }
+
+            // 3. Verificar se é dentro do horário de funcionamento
+            if (time < BARBER_HOURS.open || time > BARBER_HOURS.close) {
+                showAlert(`❌ Horário fora do funcionamento (${BARBER_HOURS.open} - ${BARBER_HOURS.close})`, 'warning');
+                return;
+            }
+
+            // 4. Verificar se faltam menos de 20 minutos para fechar
+            const [closeHour, closeMin] = BARBER_HOURS.close.split(':').map(Number);
+            const [bookHour, bookMin] = time.split(':').map(Number);
+            
+            const closeTimeInMinutes = closeHour * 60 + closeMin;
+            const bookTimeInMinutes = bookHour * 60 + bookMin;
+            const timeDiff = closeTimeInMinutes - bookTimeInMinutes;
+
+            if (timeDiff < 20) {
+                showAlert('❌ Último agendamento deve ser 20 minutos antes do fechamento', 'warning');
+                return;
+            }
+
+            // 5. Validar máximo 3 agendamentos no mesmo horário
+            const sameTimeBookings = BOOKINGS.filter(b => b.date === date && b.time === time).length;
+            if (sameTimeBookings >= 3) {
+                showAlert('❌ Este horário já está lotado (máximo 3 agendamentos por horário)', 'warning');
+                return;
+            }
+
+            // 6. Verificar se há algum horário disponível neste dia
+            const hasAvailability = checkDayAvailability(date);
+            
+            if (!hasAvailability) {
+                showAlert('❌ Não há horários disponíveis nesta data', 'warning');
+                return;
+            }
+
+            // ============ CRIAR AGENDAMENTO ============
+            const bookingId = Math.max(...BOOKINGS.map(b => b.id || 0), 0) + 1;
+            const booking = {
+                id: bookingId,
+                clientId: CURRENT_USER.id,
+                clientName: CURRENT_USER.name,
+                clientEmail: CURRENT_USER.email || '',
+                clientPhone: CURRENT_USER.phone || '(11) 9999-9999',
+                serviceType: serviceType,
+                date: date,
+                time: time,
+                price: SERVICES[serviceType].price,
+                status: 'confirmed',
+                notes: notes,
+                barberId: 1,
+                barberName: 'Cardoso',
+                createdAt: new Date().toISOString()
+            };
+
+            console.log('📋 Agendamento objeto:', booking);
+            
+            BOOKINGS.push(booking);
+            const saved = localStorage.setItem('barber_bookings', JSON.stringify(BOOKINGS));
+            
+            console.log('💾 Salvado em localStorage:', BOOKINGS);
+            console.log('Total de bookings:', BOOKINGS.length);
+
+            showAlert(`✅ Agendamento confirmado! 📅 ${date} às ${time}`, 'success');
+
+            // Resetar formulário
+            document.getElementById('serviceType').value = '';
+            document.getElementById('bookingDate').value = '';
+            document.getElementById('bookingTime').value = '';
+            document.getElementById('bookingNotes').value = '';
+
+            // Atualizar dados com delay para garantir leitura
+            setTimeout(() => {
+                loadClientBookings();
+                console.log('✅ Agendamentos do cliente recarregados');
+            }, 100);
+        }
+
+        // ============ VERIFICAR DISPONIBILIDADE DO DIA ============
+        function checkDayAvailability(date) {
+            // Gerar todos os horários possíveis (a cada 30 minutos)
+            const possibleTimes = [];
+            const [openHour, openMin] = BARBER_HOURS.open.split(':').map(Number);
+            const [closeHour, closeMin] = BARBER_HOURS.close.split(':').map(Number);
+
+            let currentHour = openHour;
+            let currentMin = openMin;
+            const closeTimeMinutes = (closeHour * 60 + closeMin) - 20; // Menos 20 minutos
+
+            while (currentHour * 60 + currentMin < closeTimeMinutes) {
+                const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+                
+                // Verificar se este horário tem espaço (máx 3)
+                const bookingsInThisTime = BOOKINGS.filter(b => b.date === date && b.time === timeStr).length;
+                const isBlocked = BLOCKED_AVAILABILITY.includes(`${date}-${timeStr}`);
+                
+                if (bookingsInThisTime < 3 && !isBlocked) {
+                    return true; // Encontrou um horário disponível
+                }
+
+                currentMin += 30;
+                if (currentMin >= 60) {
+                    currentMin = 0;
+                    currentHour += 1;
+                }
+            }
+
+            return false; // Nenhum horário disponível
+        }
+
+        function loadClientBookings() {
+            console.log('🔍🔍🔍 === CARREGANDO BOOKINGS DO CLIENTE ===');
+            console.log('👤 CURRENT_USER:', CURRENT_USER);
+            console.log('👤 CURRENT_USER.id:', CURRENT_USER?.id);
+            console.log('📊 BOOKINGS array:', BOOKINGS);
+            console.log('📊 BOOKINGS length:', BOOKINGS.length);
+            
+            if (!CURRENT_USER || !CURRENT_USER.id) {
+                console.error('❌ CURRENT_USER não definido!');
+                return;
+            }
+
+            const clientBookings = BOOKINGS.filter(b => {
+                console.log(`Comparando: ${b.clientId} === ${CURRENT_USER.id}?`, b.clientId === CURRENT_USER.id);
+                return b.clientId === CURRENT_USER.id;
+            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            console.log('✅ Bookings filtrados:', clientBookings);
+            console.log('📈 Total de agendamentos encontrados:', clientBookings.length);
+            
+            const container = document.getElementById('clientBookingsContainer');
+
+            if (clientBookings.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;padding:2rem;">Você ainda não tem agendamentos</p>';
+                console.log('⚠️ Nenhum agendamento encontrado para o cliente ID:', CURRENT_USER.id);
+                return;
+            }
+
+            container.innerHTML = clientBookings.map(booking => `
+                <div class="booking-card ${booking.status}">
+                    <div class="booking-time">📅 ${booking.date} às ${booking.time}</div>
+                    <div class="booking-client-name">${SERVICES[booking.serviceType].name}</div>
+                    <div style="color:#666;font-size:0.9rem;margin-top:0.5rem;">💈 ${booking.barberName}</div>
+                    <div style="color:#666;font-size:0.9rem;">💰 R$ ${booking.price},00</div>
+                    ${booking.notes ? `<div style="color:#666;font-size:0.9rem;margin-top:0.5rem;">📝 ${booking.notes}</div>` : ''}
+                    <span class="booking-status ${booking.status}">${booking.status === 'confirmed' ? '✅ Confirmado' : '⏳ Pendente'}</span>
+                </div>
+            `).join('');
+        }
+
+        function loadClientProfile() {
+            const container = document.getElementById('clientProfileInfo');
+            container.innerHTML = `
+                <div style="background:rgba(212,175,55,0.1); padding:2rem; border-radius:10px;">
+                    <p style="margin-bottom:1rem;"><strong>Nome:</strong> ${CURRENT_USER.name}</p>
+                    <p style="margin-bottom:1rem;"><strong>Telefone:</strong> ${CURRENT_USER.phone || 'Não informado'}</p>
+                    <p><strong>Email:</strong> ${CURRENT_USER.email || 'Não informado'}</p>
+                </div>
+            `;
+        }
+
+        // ============ BARBER FUNCTIONS ============
+        function loadBarberDashboard() {
+            loadTodayBookings();
+            updateDashboardStats();
+            renderCalendar();
+            updateClientsTable();
+        }
+
+        function loadClientDashboard() {
+            loadClientBookings();
+            loadClientProfile();
+        }
+
+        function loadTodayBookings() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = BOOKINGS.filter(b => b.date === today).sort((a, b) => a.time.localeCompare(b.time));
+            const container = document.getElementById('todayBookingsContainer');
+
+            if (todayBookings.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;padding:2rem;">Sem agendamentos para hoje</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="margin-bottom:1.5rem;">
+                    <button class="btn btn-primary" onclick="exportDayPDF()">📥 Exportar Agenda do Dia em PDF</button>
+                </div>
+                ${todayBookings.map(booking => `
+                    <div class="booking-card ${booking.status}">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:200px;">
+                                <div class="booking-time">${booking.time}</div>
+                                <div class="booking-client-name">${booking.clientName}</div>
+                                <div style="color:#666;font-size:0.9rem;margin-top:0.5rem;">📱 ${booking.clientPhone}</div>
+                                <div style="color:#666;font-size:0.9rem;">${SERVICES[booking.serviceType].name} - R$ ${booking.price},00</div>
+                                ${booking.notes ? `<div style="color:#666;font-size:0.9rem;margin-top:0.5rem;">📝 ${booking.notes}</div>` : ''}
+                            </div>
+                            <div style="display:flex;gap:0.5rem;flex-direction:column;">
+                                <button class="btn btn-small btn-outline" onclick="openBookingDetails(${booking.id})">👁️ Detalhes</button>
+                                <button class="btn btn-small btn-secondary" onclick="openEditBookingModal(${booking.id})">✏️ Editar</button>
+                                <span class="booking-status ${booking.status}">${booking.status === 'confirmed' ? '✅ Confirmado' : '⏳ Pendente'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function updateDashboardStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = BOOKINGS.filter(b => b.date === today);
+            const revenue = todayBookings.reduce((sum, b) => sum + b.price, 0);
+
+            document.getElementById('todayBookingsCount').textContent = todayBookings.length;
+            document.getElementById('totalRevenueToday').textContent = `R$ ${revenue}`;
+        }
+
+        function renderCalendar() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const monthName = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Headers dos dias da semana
+            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.style.textAlign = 'center';
+                header.style.fontWeight = 'bold';
+                header.style.color = 'var(--secondary)';
+                header.style.padding = '0.5rem';
+                header.textContent = day;
+                calendarGrid.appendChild(header);
+            });
+
+            // Dias vazios antes do mês
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day other-month';
+                calendarGrid.appendChild(empty);
+            }
+
+            // Dias do mês
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = day;
+
+                if (dateStr === today.toISOString().split('T')[0]) {
+                    dayEl.classList.add('today');
+                }
+
+                const hasBookings = BOOKINGS.some(b => b.date === dateStr);
+                if (hasBookings) {
+                    dayEl.classList.add('has-bookings');
+                }
+
+                dayEl.onclick = () => showSelectedDayBookings(dateStr);
+                calendarGrid.appendChild(dayEl);
+            }
+
+            // Dias vazios depois do mês
+            const totalCells = calendarGrid.children.length - 7;
+            const remainingCells = 35 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day other-month';
+                calendarGrid.appendChild(empty);
+            }
+        }
+
+        function showSelectedDayBookings(dateStr) {
+            const dayBookings = BOOKINGS.filter(b => b.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
+            const container = document.getElementById('selectedDayBookings');
+
+            if (dayBookings.length === 0) {
+                container.innerHTML = `<p style="text-align:center;color:#999;padding:2rem;margin-top:2rem;">Nenhum agendamento em ${formatDate(new Date(dateStr))}</p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="margin-top:2rem;padding:1.5rem;background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    <h3 style="color:var(--secondary);margin-bottom:1rem;">📅 Agendamentos - ${formatDate(new Date(dateStr))}</h3>
+                    <div>
+                        ${dayBookings.map(booking => `
+                            <div class="booking-card ${booking.status}">
+                                <div class="booking-time">${booking.time}</div>
+                                <div class="booking-client-name">${booking.clientName}</div>
+                                <div style="color:#666;font-size:0.9rem;">📱 ${booking.clientPhone}</div>
+                                <div style="color:#666;font-size:0.9rem;">${SERVICES[booking.serviceType].name} - R$ ${booking.price},00</div>
+                                <span class="booking-status ${booking.status}">${booking.status === 'confirmed' ? '✅ Confirmado' : '⏳ Pendente'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function previousMonth() {
+            // Implementar navegação de mês anterior se necessário
+            showAlert('ℹ️ Navegação entre meses em desenvolvimento', 'info');
+        }
+
+        function nextMonth() {
+            // Implementar navegação para próximo mês se necessário
+            showAlert('ℹ️ Navegação entre meses em desenvolvimento', 'info');
+        }
+
+        function addWalkinClient(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('walkinName').value;
+            const phone = document.getElementById('walkinPhone').value;
+            const service = document.getElementById('walkinService').value;
+            const notes = document.getElementById('walkinNotes').value;
+
+            const booking = {
+                id: Math.max(...BOOKINGS.map(b => b.id || 0), 0) + 1,
+                clientId: null,
+                clientName: name,
+                clientPhone: phone,
+                serviceType: service,
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                price: SERVICES[service].price,
+                status: 'confirmed',
+                notes: notes + ' [WALK-IN]',
+                barberId: 1,
+                barberName: 'Cardoso',
+                createdAt: new Date().toISOString()
+            };
+
+            BOOKINGS.push(booking);
+            localStorage.setItem('barber_bookings', JSON.stringify(BOOKINGS));
+
+            showAlert(`✅ Cliente ${name} registrado como walk-in!`, 'success');
+
+            document.getElementById('walkinName').value = '';
+            document.getElementById('walkinPhone').value = '';
+            document.getElementById('walkinService').value = '';
+            document.getElementById('walkinNotes').value = '';
+
+            loadWalkinList();
+            loadTodayBookings();
+            updateDashboardStats();
+        }
+
+        function loadWalkinList() {
+            const today = new Date().toISOString().split('T')[0];
+            const walkins = BOOKINGS.filter(b => b.date === today && b.notes && b.notes.includes('WALK-IN')).sort((a, b) => a.time.localeCompare(b.time));
+            const container = document.getElementById('walkinListContainer');
+
+            if (walkins.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;padding:2rem;">Nenhum walk-in registrado hoje</p>';
+                return;
+            }
+
+            container.innerHTML = walkins.map(booking => `
+                <div class="booking-card confirmed">
+                    <div class="booking-time">${booking.time}</div>
+                    <div class="booking-client-name">🚶 ${booking.clientName}</div>
+                    <div style="color:#666;font-size:0.9rem;">📱 ${booking.clientPhone}</div>
+                    <div style="color:#666;font-size:0.9rem;">${SERVICES[booking.serviceType].name} - R$ ${booking.price},00</div>
+                    <span class="booking-status confirmed">✅ Registrado</span>
+                </div>
+            `).join('');
+        }
+
+        // ============ BLOQUEAR DISPONIBILIDADE ============
+        function blockAvailability(event) {
+            event.preventDefault();
+
+            const date = document.getElementById('blockDate').value;
+            const time = document.getElementById('blockTime').value;
+            const blockedKey = `${date}-${time}`;
+
+            if (BLOCKED_AVAILABILITY.includes(blockedKey)) {
+                showAlert('⚠️ Este horário já está bloqueado', 'warning');
+                return;
+            }
+
+            BLOCKED_AVAILABILITY.push(blockedKey);
+            localStorage.setItem('barber_blocked', JSON.stringify(BLOCKED_AVAILABILITY));
+
+            showAlert(`✅ Horário ${time} do dia ${date} bloqueado!`, 'success');
+
+            document.getElementById('blockDate').value = '';
+            document.getElementById('blockTime').value = '';
+
+            loadBlockedAvailability();
+        }
+
+        function loadBlockedAvailability() {
+            const container = document.getElementById('blockedAvailabilityList');
+
+            if (BLOCKED_AVAILABILITY.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;padding:1rem;">Nenhum horário bloqueado</p>';
+                return;
+            }
+
+            container.innerHTML = BLOCKED_AVAILABILITY.map((blocked, idx) => {
+                const [date, time] = blocked.split('-');
+                return `
+                    <div style="background:#f9f9f9;padding:1rem;border-radius:8px;margin-bottom:0.8rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                        <div>
+                            <strong>${date} às ${time}</strong>
+                            <p style="margin:0.5rem 0 0 0;color:#666;font-size:0.9rem;">${formatDate(new Date(date))}</p>
+                        </div>
+                        <button class="btn btn-small btn-danger" onclick="removeBlockedSlot('${blocked}')">🗑️ Remover</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeBlockedSlot(blockedKey) {
+            BLOCKED_AVAILABILITY = BLOCKED_AVAILABILITY.filter(b => b !== blockedKey);
+            localStorage.setItem('barber_blocked', JSON.stringify(BLOCKED_AVAILABILITY));
+            showAlert('✅ Horário desbloqueado!', 'success');
+            loadBlockedAvailability();
+        }
+
+        // ============ EDITAR AGENDAMENTO ============
+        let currentEditingBooking = null;
+
+        function openEditBookingModal(bookingId) {
+            const booking = BOOKINGS.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            currentEditingBooking = booking;
+
+            document.getElementById('editBookingClient').value = booking.clientName;
+            document.getElementById('editBookingDate').value = booking.date;
+            document.getElementById('editBookingTime').value = booking.time;
+            document.getElementById('editBookingService').value = SERVICES[booking.serviceType].name;
+
+            document.getElementById('editBookingModal').classList.add('active');
+        }
+
+        function closeEditBookingModal() {
+            document.getElementById('editBookingModal').classList.remove('active');
+            currentEditingBooking = null;
+        }
+
+        function saveEditedBooking(event) {
+            event.preventDefault();
+
+            if (!currentEditingBooking) return;
+
+            const newDate = document.getElementById('editBookingDate').value;
+            const newTime = document.getElementById('editBookingTime').value;
+
+            // ============ VALIDAÇÕES ============
+
+            // 1. Verificar se a data inteira está bloqueada
+            const allDayBlockKey = `${newDate}-FULL-DAY`;
+            if (BLOCKED_AVAILABILITY.includes(allDayBlockKey)) {
+                showAlert('❌ Esta data está completamente bloqueada', 'warning');
+                return;
+            }
+
+            // 2. Verificar se o horário específico está bloqueado
+            const blockedKey = `${newDate}-${newTime}`;
+            if (BLOCKED_AVAILABILITY.includes(blockedKey)) {
+                showAlert('❌ Este horário está indisponível', 'warning');
+                return;
+            }
+
+            // 3. Verificar se é dentro do horário de funcionamento
+            if (newTime < BARBER_HOURS.open || newTime > BARBER_HOURS.close) {
+                showAlert(`❌ Horário fora do funcionamento (${BARBER_HOURS.open} - ${BARBER_HOURS.close})`, 'warning');
+                return;
+            }
+
+            // 4. Verificar se faltam menos de 20 minutos para fechar
+            const [closeHour, closeMin] = BARBER_HOURS.close.split(':').map(Number);
+            const [bookHour, bookMin] = newTime.split(':').map(Number);
+            
+            const closeTimeInMinutes = closeHour * 60 + closeMin;
+            const bookTimeInMinutes = bookHour * 60 + bookMin;
+            const timeDiff = closeTimeInMinutes - bookTimeInMinutes;
+
+            if (timeDiff < 20) {
+                showAlert('❌ Último agendamento deve ser 20 minutos antes do fechamento', 'warning');
+                return;
+            }
+
+            // 5. Validar máximo 3 agendamentos no novo horário
+            const sameTimeBookings = BOOKINGS.filter(b => 
+                b.date === newDate && 
+                b.time === newTime && 
+                b.id !== currentEditingBooking.id
+            ).length;
+            
+            if (sameTimeBookings >= 3) {
+                showAlert('❌ Este novo horário já está lotado (máximo 3 agendamentos)', 'warning');
+                return;
+            }
+
+            // ============ ATUALIZAR AGENDAMENTO ============
+            const bookingIndex = BOOKINGS.findIndex(b => b.id === currentEditingBooking.id);
+            if (bookingIndex !== -1) {
+                BOOKINGS[bookingIndex].date = newDate;
+                BOOKINGS[bookingIndex].time = newTime;
+                localStorage.setItem('barber_bookings', JSON.stringify(BOOKINGS));
+
+                showAlert(`✅ Agendamento atualizado para ${newDate} às ${newTime}!`, 'success');
+                
+                loadTodayBookings();
+                updateDashboardStats();
+                renderCalendar();
+                closeEditBookingModal();
+            }
+        }
+
+        // ============ CLIENTS TABLE ============
+        function updateClientsTable() {
+            const tbody = document.getElementById('clientsTableBody');
+            tbody.innerHTML = CLIENTS.map(client => `
+                <tr data-client-id="${client.id}">
+                    <td class="client-name">${client.name}</td>
+                    <td>${client.phone || '-'}</td>
+                    <td>${client.email || '-'}</td>
+                    <td><span style="background:rgba(212,175,55,0.1);padding:0.3rem 0.8rem;border-radius:20px;color:var(--secondary);font-weight:600;">${BOOKINGS.filter(b => b.clientId === client.id).length}</span></td>
+                    <td>
+                        <div class="button-group">
+                            <button class="btn btn-small btn-outline" onclick="viewClientDetails(${client.id})">ℹ️ Info</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============ ADICIONAR CLIENTE ============
+        function openAddClientModal() {
+            document.getElementById('addClientModal').classList.add('active');
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('addClientModal').classList.remove('active');
+            document.getElementById('newClientName').value = '';
+            document.getElementById('newClientPhone').value = '';
+            document.getElementById('newClientEmail').value = '';
+        }
+
+        function addNewClient(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('newClientName').value;
+            const phone = document.getElementById('newClientPhone').value;
+            const email = document.getElementById('newClientEmail').value;
+
+            const newClient = {
+                id: Math.max(...CLIENTS.map(c => c.id || 0), 0) + 1,
+                name,
+                phone,
+                email: email || '',
+                password: '123456',
+                createdAt: new Date(),
+                bookingCount: 0
+            };
+
+            CLIENTS.push(newClient);
+            localStorage.setItem('barber_clients', JSON.stringify(CLIENTS));
+
+            showAlert(`✅ Cliente ${name} adicionado com sucesso!`, 'success');
+            updateClientsTable();
+            closeAddClientModal();
+            
+            console.log('👤 Novo cliente adicionado:', newClient);
+        }
+
+        // ============ DETALHES DO AGENDAMENTO ============
+        let currentBookingDetail = null;
+
+        function openBookingDetails(bookingId) {
+            const booking = BOOKINGS.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            currentBookingDetail = booking;
+            const modal = document.getElementById('bookingDetailsModal');
+            const content = document.getElementById('bookingDetailsContent');
+
+            const client = CLIENTS.find(c => c.id === booking.clientId);
+
+            content.innerHTML = `
+                <div style="background:rgba(212,175,55,0.1);padding:1.5rem;border-radius:10px;">
+                    <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid rgba(212,175,55,0.3);">
+                        <p style="margin:0.5rem 0;"><strong>👤 Cliente:</strong> ${booking.clientName}</p>
+                        <p style="margin:0.5rem 0;"><strong>📱 Telefone:</strong> ${booking.clientPhone}</p>
+                        ${client ? `<p style="margin:0.5rem 0;"><strong>📧 Email:</strong> ${client.email || 'Não informado'}</p>` : ''}
+                    </div>
+                    
+                    <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid rgba(212,175,55,0.3);">
+                        <p style="margin:0.5rem 0;"><strong>📅 Data:</strong> ${formatDate(new Date(booking.date))}</p>
+                        <p style="margin:0.5rem 0;"><strong>⏰ Horário:</strong> ${booking.time}</p>
+                        <p style="margin:0.5rem 0;"><strong>✂️ Serviço:</strong> ${SERVICES[booking.serviceType].name}</p>
+                    </div>
+
+                    <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:2px solid rgba(212,175,55,0.3);">
+                        <p style="margin:0.5rem 0;"><strong>💰 Valor:</strong> <span style="color:var(--secondary);font-weight:bold;font-size:1.2rem;">R$ ${booking.price},00</span></p>
+                        <p style="margin:0.5rem 0;"><strong>📊 Status:</strong> <span style="background:${booking.status === 'confirmed' ? 'rgba(39,174,96,0.2)' : 'rgba(243,156,18,0.2)'};color:${booking.status === 'confirmed' ? '#27ae60' : '#f39c12'};padding:0.4rem 0.8rem;border-radius:4px;font-weight:600;">${booking.status === 'confirmed' ? '✅ Confirmado' : '⏳ Pendente'}</span></p>
+                    </div>
+
+                    ${booking.notes ? `<div style="padding:1rem;background:white;border-radius:8px;border-left:4px solid var(--secondary);">
+                        <p style="margin:0;"><strong>📝 Observações:</strong></p>
+                        <p style="margin:0.5rem 0;color:#666;">${booking.notes}</p>
+                    </div>` : ''}
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeBookingDetailsModal() {
+            document.getElementById('bookingDetailsModal').classList.remove('active');
+            currentBookingDetail = null;
+        }
+
+        // ============ EXPORTAR PDF ============
+        function exportBookingPDF() {
+            if (!currentBookingDetail) return;
+
+            const booking = currentBookingDetail;
+            const client = CLIENTS.find(c => c.id === booking.clientId);
+
+            // Criar conteúdo do PDF
+            const content = document.createElement('div');
+            content.style.cssText = 'padding: 20px; font-family: Arial; color: #333; background: white;';
+            
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px;">
+                    <h1 style="color: #d4af37; margin: 0; font-size: 28px;">BARBER CARDOSOS</h1>
+                    <p style="margin: 5px 0; color: #666;">Barbershop Premium</p>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <h2 style="color: #8b4513; border-bottom: 2px solid #d4af37; padding-bottom: 10px; margin-bottom: 15px;">DETALHES DO AGENDAMENTO</h2>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr style="background: #f5f5f5;">
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Cliente:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${booking.clientName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Telefone:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${booking.clientPhone}</td>
+                        </tr>
+                        ${client ? `<tr style="background: #f5f5f5;">
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Email:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${client.email || '-'}</td>
+                        </tr>` : ''}
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Data:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${formatDate(new Date(booking.date))}</td>
+                        </tr>
+                        <tr style="background: #f5f5f5;">
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Horário:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${booking.time}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Serviço:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${SERVICES[booking.serviceType].name}</td>
+                        </tr>
+                        <tr style="background: #d4af37;">
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong style="color: #1a1a1a;">Valor:</strong></td>
+                            <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong style="color: #1a1a1a;">R$ ${booking.price},00</strong></td>
+                        </tr>
+                    </table>
+
+                    ${booking.notes ? `<div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #d4af37; margin-top: 15px;">
+                        <strong>Observações:</strong><br/>
+                        ${booking.notes}
+                    </div>` : ''}
+                </div>
+
+                <div style="margin-top: 40px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <p>Documento gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+                    <p>Barber Cardosos © 2024</p>
+                </div>
+            `;
+
+            // Usar html2pdf para gerar o PDF
+            const opt = {
+                margin: 10,
+                filename: `agendamento-${booking.date}-${booking.time.replace(':', '')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            html2pdf().set(opt).from(content).save();
+            showAlert('✅ PDF exportado com sucesso!', 'success');
+        }
+
+        // ============ EXPORTAR PDF DE TODOS OS AGENDAMENTOS DO DIA ============
+        function exportDayPDF() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = BOOKINGS.filter(b => b.date === today).sort((a, b) => a.time.localeCompare(b.time));
+
+            if (todayBookings.length === 0) {
+                showAlert('⚠️ Não há agendamentos para hoje', 'warning');
+                return;
+            }
+
+            const content = document.createElement('div');
+            content.style.cssText = 'padding: 20px; font-family: Arial; color: #333; background: white;';
+            
+            let html = `
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #d4af37; padding-bottom: 20px;">
+                    <h1 style="color: #d4af37; margin: 0; font-size: 28px;">BARBER CARDOSOS</h1>
+                    <p style="margin: 5px 0; color: #666;">Agenda do Dia - ${formatDate(new Date(today))}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                    <thead>
+                        <tr style="background: #1a1a1a; color: white;">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Horário</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Cliente</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #d4af37;">Serviço</th>
+                            <th style="padding: 12px; text-align: right; border: 1px solid #d4af37;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            let totalValue = 0;
+            todayBookings.forEach((booking, idx) => {
+                totalValue += booking.price;
+                const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9f9f9';
+                html += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 12px; border: 1px solid #eee;"><strong>${booking.time}</strong></td>
+                        <td style="padding: 12px; border: 1px solid #eee;">${booking.clientName}</td>
+                        <td style="padding: 12px; border: 1px solid #eee;">${SERVICES[booking.serviceType].name}</td>
+                        <td style="padding: 12px; border: 1px solid #eee; text-align: right;"><strong>R$ ${booking.price},00</strong></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #d4af37;">
+                            <td colspan="3" style="padding: 12px; border: 1px solid #d4af37;"><strong style="color: #1a1a1a;">TOTAL DO DIA</strong></td>
+                            <td style="padding: 12px; border: 1px solid #d4af37; text-align: right;"><strong style="color: #1a1a1a;">R$ ${totalValue},00</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="margin-top: 40px; text-align: center; color: #999; font-size: 12px;">
+                    <p>Total de agendamentos: ${todayBookings.length}</p>
+                    <p>Documento gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+                    <p>Barber Cardosos © 2024</p>
+                </div>
+            `;
+
+            content.innerHTML = html;
+
+            const opt = {
+                margin: 10,
+                filename: `agenda-barber-${today}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            html2pdf().set(opt).from(content).save();
+            showAlert('✅ PDF da agenda do dia exportado!', 'success');
+        }
+
+        function viewClientDetails(clientId) {
+            const client = CLIENTS.find(c => c.id === clientId);
+            const clientBookings = BOOKINGS.filter(b => b.clientId === clientId);
+            const totalSpent = clientBookings.reduce((sum, b) => sum + b.price, 0);
+
+            // Criar div com detalhes
+            const detailsDiv = document.createElement('div');
+            detailsDiv.id = `client-details-${clientId}`;
+            detailsDiv.style.cssText = `
+                background: rgba(212, 175, 55, 0.1);
+                border-left: 4px solid var(--secondary);
+                padding: 1.5rem;
+                border-radius: 8px;
+                margin: 1rem 0;
+            `;
+
+            detailsDiv.innerHTML = `
+                <div style="display:grid;gap:0.5rem;">
+                    <p style="margin:0;"><strong>📱 Telefone:</strong> ${client.phone || 'Não informado'}</p>
+                    <p style="margin:0;"><strong>📧 Email:</strong> ${client.email || 'Não informado'}</p>
+                    <p style="margin:0;"><strong>📋 Total de agendamentos:</strong> ${clientBookings.length}</p>
+                    <p style="margin:0;"><strong>💰 Total gasto:</strong> R$ ${totalSpent},00</p>
+                    <p style="margin:0;"><strong>📅 Cadastrado em:</strong> ${formatDate(new Date(client.createdAt))}</p>
+                </div>
+                <button class="btn btn-small btn-danger" onclick="removeClientDetails(${clientId})" style="margin-top:1rem;">🗑️ Fechar Detalhes</button>
+            `;
+
+            // Procurar por detalhes antigos e remover
+            const oldDetails = document.getElementById(`client-details-${clientId}`);
+            if (oldDetails) {
+                oldDetails.remove();
+                return;
+            }
+
+            // Inserir após a linha da tabela
+            const row = document.querySelector(`[data-client-id="${clientId}"]`);
+            if (row) {
+                row.after(detailsDiv);
+            }
+        }
+
+        function removeClientDetails(clientId) {
+            const detailsDiv = document.getElementById(`client-details-${clientId}`);
+            if (detailsDiv) {
+                detailsDiv.remove();
+            }
+        }
+
+        // ============ UTILITIES ============
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '80px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.maxWidth = '300px';
+            alertDiv.style.zIndex = '1000';
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function toggleMobileMenu() {
+            const nav = document.getElementById('navbarNav');
+            nav.classList.toggle('mobile-hidden');
+            nav.classList.toggle('mobile-visible');
+        }
+
+        function closeMobileMenu() {
+            const nav = document.getElementById('navbarNav');
+            nav.classList.add('mobile-hidden');
+            nav.classList.remove('mobile-visible');
+        }
+
+        // ============ BACKGROUND ANIMATION ============
+        function initBackgroundAnimation() {
+            const bgContainer = document.getElementById('backgroundAnimation');
+            const tools = [
+                { type: 'scissors', size: 80 },
+                { type: 'razor', size: 90 },
+                { type: 'scissors', size: 70 },
+                { type: 'razor', size: 85 },
+                { type: 'scissors', size: 75 },
+                { type: 'razor', size: 80 },
+                { type: 'scissors', size: 85 },
+                { type: 'razor', size: 75 }
+            ];
+
+            const positions = [
+                { top: '5%', left: '5%' },
+                { top: '15%', right: '8%' },
+                { top: '35%', left: '3%' },
+                { top: '50%', right: '5%' },
+                { top: '65%', left: '7%' },
+                { top: '75%', right: '10%' },
+                { top: '85%', left: '4%' },
+                { top: '25%', right: '3%' }
+            ];
+
+            tools.forEach((tool, idx) => {
+                const div = document.createElement('div');
+                div.className = 'floating-tool';
+                div.style.width = tool.size + 'px';
+                div.style.height = tool.size + 'px';
+                
+                if (positions[idx].top) div.style.top = positions[idx].top;
+                if (positions[idx].bottom) div.style.bottom = positions[idx].bottom;
+                if (positions[idx].left) div.style.left = positions[idx].left;
+                if (positions[idx].right) div.style.right = positions[idx].right;
+
+                if (tool.type === 'scissors') {
+                    // SVG de TESOURA melhorado
+                    div.innerHTML = `
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                            <!-- Lâmina esquerda -->
+                            <path d="M 20 15 Q 15 15 12 20 Q 10 25 15 35 L 45 50 L 15 65 Q 10 75 12 80 Q 15 85 20 85 Q 28 85 35 75 L 50 60 L 35 45 Q 28 35 20 15 Z" fill="currentColor"/>
+                            <!-- Lâmina direita -->
+                            <path d="M 80 15 Q 85 15 88 20 Q 90 25 85 35 L 55 50 L 85 65 Q 90 75 88 80 Q 85 85 80 85 Q 72 85 65 75 L 50 60 L 65 45 Q 72 35 80 15 Z" fill="currentColor"/>
+                            <!-- Parafuso -->
+                            <circle cx="50" cy="50" r="5" fill="currentColor"/>
+                        </svg>
+                    `;
+                    div.style.color = '#d4af37';
+                    div.style.opacity = '0.08';
+                } else {
+                    // SVG de NAVALHA melhorado
+                    div.innerHTML = `
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                            <!-- Cabo -->
+                            <rect x="25" y="15" width="20" height="55" rx="10" fill="currentColor"/>
+                            <!-- Lâmina -->
+                            <path d="M 35 70 L 40 95 L 60 95 L 65 70 Q 50 80 35 70 Z" fill="currentColor"/>
+                            <!-- Detalhe do cabo -->
+                            <line x1="30" y1="30" x2="50" y2="30" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+                            <line x1="30" y1="45" x2="50" y2="45" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+                        </svg>
+                    `;
+                    div.style.color = '#8b4513';
+                    div.style.opacity = '0.1';
+                }
+
+                bgContainer.appendChild(div);
+            });
+        }
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ App Initialized');
+            console.log('BOOKINGS:', BOOKINGS);
+            console.log('CLIENTS:', CLIENTS);
+            
+            // Inicializar animações de fundo
+            initBackgroundAnimation();
+
+            // Fechar modais ao clicar fora
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

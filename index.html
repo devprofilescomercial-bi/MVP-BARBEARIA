@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Barbearia Online - Sistema de Agendamento</title>
+    <meta name="description" content="Agende seu horário na barbearia direto pelo celular.">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Barbearia Online">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="background-animation" id="backgroundAnimation"></div>
+
+    <div class="container-wrapper">
+        <nav class="navbar">
+            <div class="navbar-brand"><span class="brand-icon">✂️</span> Barbearia Online</div>
+            <div class="user-info hidden" id="userInfo">
+                <span id="userNameLabel"></span>
+                <button class="btn btn-small btn-danger" id="logoutBtn">🚪 Sair</button>
+            </div>
+        </nav>
+
+        <div class="container">
+
+            <!-- AUTH SCREEN -->
+            <div id="authScreen" class="screen active">
+                <div class="card" style="max-width:480px;margin:2rem auto;">
+                    <div class="login-logo-container">
+                        <div class="login-logo">✂️</div>
+                        <h1 style="color:var(--secondary);font-size:1.8rem;">Barbearia Online</h1>
+                        <p class="text-muted">Agendamento para barbearias, na palma da mão</p>
+                    </div>
+
+                    <div class="role-toggle">
+                        <button type="button" id="roleClientBtn" class="active" data-role="client">👤 Sou Cliente</button>
+                        <button type="button" id="roleOwnerBtn" data-role="owner">💇 Sou Barbeiro</button>
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>📧 Email</label>
+                            <input type="email" id="loginEmail" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label>🔑 Senha</label>
+                            <input type="password" id="loginPassword" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                    </form>
+
+                    <p class="text-center" style="margin-top:1.2rem;">
+                        <a id="showSignupLink" style="color:var(--secondary);cursor:pointer;font-weight:600;">Não tem conta? Criar conta</a>
+                    </p>
+
+                    <form id="signupForm" class="hidden" style="margin-top:1rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+                        <div class="form-group">
+                            <label>Nome completo</label>
+                            <input type="text" id="signupName" required autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <input type="tel" id="signupPhone" required autocomplete="tel">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="signupEmail" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label>Senha (mín. 6 caracteres)</label>
+                            <input type="password" id="signupPassword" required minlength="6" autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">✓ Criar Conta</button>
+                    </form>
+                    <p class="text-center hidden" id="showLoginLink" style="margin-top:1rem;">
+                        <a style="color:#666;cursor:pointer;">Já tenho conta, voltar ao login</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- OWNER ONBOARDING -->
+            <div id="ownerOnboardingScreen" class="screen">
+                <div class="card" style="max-width:520px;margin:2rem auto;">
+                    <h2 class="card-title">🏪 Cadastre sua Barbearia</h2>
+                    <form id="onboardingForm">
+                        <div class="form-group">
+                            <label>Nome da barbearia</label>
+                            <input type="text" id="obShopName" required>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="tel" id="obPhone">
+                            </div>
+                            <div class="form-group">
+                                <label>Endereço</label>
+                                <input type="text" id="obAddress">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Abre às</label>
+                                <input type="time" id="obOpenTime" value="08:00" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha às</label>
+                                <input type="time" id="obCloseTime" value="20:00" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">✓ Criar Barbearia</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CLIENT: SHOP PICKER -->
+            <div id="clientPickerScreen" class="screen">
+                <div class="tabs">
+                    <button class="tab-button active" data-picker-tab="shops">🏪 Barbearias</button>
+                    <button class="tab-button" data-picker-tab="mybookings">📋 Meus Agendamentos</button>
+                    <button class="tab-button" data-picker-tab="profile">👤 Perfil</button>
+                </div>
+                <div id="pickerShopsTab" class="tab-content active">
+                    <div class="card">
+                        <h2 class="card-title">🏪 Escolha uma Barbearia</h2>
+                        <div id="shopGrid" class="shop-grid"></div>
+                    </div>
+                </div>
+                <div id="pickerMyBookingsTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">📋 Meus Agendamentos</h2>
+                        <div id="clientAllBookingsContainer"></div>
+                    </div>
+                </div>
+                <div id="pickerProfileTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">👤 Meu Perfil</h2>
+                        <div id="clientProfileInfo"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENT: SHOP BOOKING SCREEN -->
+            <div id="clientShopScreen" class="screen">
+                <button class="btn btn-small btn-outline" id="backToShopsBtn" style="margin-bottom:1.2rem;">← Voltar às barbearias</button>
+                <div class="card" style="display:flex;align-items:center;gap:1rem;">
+                    <div class="shop-card-logo" id="clientShopLogo" style="width:60px;height:60px;">✂️</div>
+                    <div>
+                        <h2 style="color:var(--primary);" id="clientShopName">—</h2>
+                        <p class="text-muted" id="clientShopAddress"></p>
+                    </div>
+                </div>
+                <div class="tabs">
+                    <button class="tab-button active" data-shop-tab="book">📅 Agendar</button>
+                    <button class="tab-button" data-shop-tab="myshopbookings">📋 Meus Horários Aqui</button>
+                </div>
+                <div id="shopBookTab" class="tab-content active">
+                    <div class="card">
+                        <h2 class="card-title">📅 Agendar um Horário</h2>
+                        <form id="bookingForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Serviço</label>
+                                    <select id="serviceType" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="bookingDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Horário (HH:MM)</label>
+                                    <input type="time" id="bookingTime" required style="font-size:1.2rem;text-align:center;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="bookingNotes" rows="3" placeholder="Descreva o corte/estilo desejado..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">✓ Confirmar Agendamento</button>
+                        </form>
+                    </div>
+                </div>
+                <div id="shopMyBookingsTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">📋 Meus Horários Nesta Barbearia</h2>
+                        <div id="clientShopBookingsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OWNER DASHBOARD -->
+            <div id="ownerDashboardScreen" class="screen">
+                <div class="tabs">
+                    <button class="tab-button active" data-owner-tab="today">📅 Hoje</button>
+                    <button class="tab-button" data-owner-tab="calendar">📆 Calendário</button>
+                    <button class="tab-button" data-owner-tab="walkin">🚶 Walk-in</button>
+                    <button class="tab-button" data-owner-tab="availability">🔒 Disponibilidade</button>
+                    <button class="tab-button" data-owner-tab="clients">👥 Clientes</button>
+                    <button class="tab-button" data-owner-tab="settings">⚙️ Perfil da Barbearia</button>
+                </div>
+
+                <div id="ownerTodayTab" class="tab-content active">
+                    <div class="grid grid-2">
+                        <div class="stat-card">
+                            <div class="stat-number" id="todayBookingsCount">0</div>
+                            <div class="stat-label">Agendamentos Hoje</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRevenueToday">R$ 0</div>
+                            <div class="stat-label">Faturamento Hoje</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2 class="card-title">📅 Agendamentos de Hoje</h2>
+                        <div id="todayBookingsContainer"></div>
+                    </div>
+                </div>
+
+                <div id="ownerCalendarTab" class="tab-content">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <h2 id="calendarMonthLabel">Calendário</h2>
+                            <div class="calendar-nav button-group">
+                                <button class="btn btn-small btn-outline" id="calendarPrevBtn">←</button>
+                                <button class="btn btn-small btn-outline" id="calendarNextBtn">→</button>
+                            </div>
+                        </div>
+                        <div id="calendarGrid" class="calendar-grid"></div>
+                        <div id="selectedDayBookings" style="margin-top:2rem;"></div>
+                    </div>
+                </div>
+
+                <div id="ownerWalkinTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">🚶 Registrar Walk-in</h2>
+                        <form id="walkinForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Nome do Cliente</label>
+                                    <input type="text" id="walkinName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Telefone</label>
+                                    <input type="tel" id="walkinPhone" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Serviço</label>
+                                <select id="walkinService" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="walkinNotes" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">✓ Registrar Walk-in</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h2 class="card-title">🚶 Walk-ins Registrados Hoje</h2>
+                        <div id="walkinListContainer"></div>
+                    </div>
+                </div>
+
+                <div id="ownerAvailabilityTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">🔒 Gerenciar Disponibilidade</h2>
+                        <p class="text-muted" style="margin-bottom:1.5rem;">Bloqueie horários específicos quando quiser indisponíveis</p>
+                        <form id="blockForm" style="background:rgba(212,175,55,0.1);padding:1.5rem;border-radius:10px;margin-bottom:2rem;">
+                            <h3 style="color:var(--secondary);margin-bottom:1rem;">➕ Bloquear Novo Horário</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="blockDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Horário (deixe em branco p/ bloquear o dia todo)</label>
+                                    <input type="time" id="blockTime">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">🔒 Bloquear</button>
+                        </form>
+                        <div class="card" style="background:white;border:2px solid var(--border);">
+                            <h3 style="color:var(--secondary);margin-bottom:1rem;">Horários Bloqueados</h3>
+                            <div id="blockedAvailabilityList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ownerClientsTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">👥 Meus Clientes</h2>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr><th>Nome</th><th>Telefone</th><th>Agendamentos</th><th>Total Gasto</th></tr>
+                                </thead>
+                                <tbody id="clientsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ownerSettingsTab" class="tab-content">
+                    <div class="card">
+                        <h2 class="card-title">⚙️ Perfil da Barbearia</h2>
+                        <div class="logo-upload-row">
+                            <img id="logoPreviewImg" class="logo-preview hidden" alt="Logo">
+                            <div id="logoPreviewPlaceholder" class="logo-preview">✂️</div>
+                            <div>
+                                <input type="file" id="logoFileInput" accept="image/*" class="hidden">
+                                <button type="button" class="btn btn-outline btn-small" id="logoUploadBtn">📷 Trocar Logo</button>
+                            </div>
+                        </div>
+                        <form id="shopSettingsForm">
+                            <div class="form-group">
+                                <label>Nome da barbearia</label>
+                                <input type="text" id="settingsShopName" required>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Telefone</label>
+                                    <input type="tel" id="settingsPhone">
+                                </div>
+                                <div class="form-group">
+                                    <label>Endereço</label>
+                                    <input type="text" id="settingsAddress">
+                                </div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Abre às</label>
+                                    <input type="time" id="settingsOpenTime" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha às</label>
+                                    <input type="time" id="settingsCloseTime" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">✓ Salvar Dados da Barbearia</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="card-title">✂️ Serviços e Preços</h2>
+                        <div id="servicesEditorList"></div>
+                        <button type="button" class="btn btn-outline btn-block" id="addServiceBtn" style="margin-top:1rem;">➕ Adicionar Serviço</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MODAL DE EDITAR AGENDAMENTO -->
+        <div id="editBookingModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="closeEditBookingModal">&times;</span>
+                <h2 class="card-title">✏️ Editar Agendamento</h2>
+                <form id="editBookingForm">
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" id="editBookingClient" disabled style="background:#f0f0f0;">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Data</label>
+                            <input type="date" id="editBookingDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Horário (HH:MM)</label>
+                            <input type="time" id="editBookingTime" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-bottom:0.5rem;">✓ Salvar Alterações</button>
+                    <button type="button" class="btn btn-secondary btn-block" id="cancelEditBookingBtn">Cancelar</button>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Barbearia Online</p>
+        </footer>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
