@@ -3,7 +3,11 @@ import { state } from './state.js';
 import { showAlert, showScreen } from './shared.js';
 import { initAuthScreen, logout, getActiveSession, fetchProfile } from './auth.js';
 import { initOwnerOnboarding, initOwnerDashboard } from './owner.js';
-import { initClientPicker } from './client.js';
+import { initClientPicker, openShopBySlug } from './client.js';
+
+// Suporta abrir direto a página de uma barbearia via link/QR code:
+// https://seusite.netlify.app/?loja=nome-da-barbearia
+const pendingShopSlug = new URLSearchParams(window.location.search).get('loja');
 
 function initBackgroundAnimation() {
     const bgContainer = document.getElementById('backgroundAnimation');
@@ -62,6 +66,10 @@ async function routeAfterAuth() {
             await initOwnerDashboard();
         }
     } else {
+        if (pendingShopSlug) {
+            const opened = await openShopBySlug(pendingShopSlug);
+            if (opened) return;
+        }
         showScreen('clientPickerScreen');
         await initClientPicker();
     }

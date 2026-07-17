@@ -45,7 +45,7 @@ function wirePickerTabs() {
 }
 
 async function loadShopGrid() {
-    const { data, error } = await supabase.from('barbearias').select('*').order('name', { ascending: true });
+    const { data, error } = await supabase.from('barbearias').select('*').eq('slug', 'cardoso-barbearia').order('name', { ascending: true });
     const grid = document.getElementById('shopGrid');
     if (error) { grid.innerHTML = '<p class="empty-state">Erro ao carregar barbearias</p>'; return; }
     if (!data.length) { grid.innerHTML = '<p class="empty-state">Nenhuma barbearia cadastrada ainda</p>'; return; }
@@ -63,6 +63,13 @@ async function loadShopGrid() {
     grid.querySelectorAll('[data-shop]').forEach(card => {
         card.addEventListener('click', () => openShop(data.find(s => s.id === card.dataset.shop)));
     });
+}
+
+export async function openShopBySlug(slug) {
+    const { data, error } = await supabase.from('barbearias').select('*').eq('slug', slug).maybeSingle();
+    if (error || !data) return false;
+    await openShop(data);
+    return true;
 }
 
 async function openShop(shop) {
