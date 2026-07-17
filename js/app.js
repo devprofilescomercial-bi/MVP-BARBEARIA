@@ -75,8 +75,15 @@ async function routeAfterAuth() {
     }
 }
 
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+}
+
 async function bootstrap() {
     initBackgroundAnimation();
+    registerServiceWorker();
 
     initAuthScreen({
         onLoginSuccess: routeAfterAuth,
